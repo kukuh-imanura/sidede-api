@@ -2,11 +2,11 @@
   "name": "sidede-api",
   "version": "1.0.0",
   "description": "Backend API untuk Sistem Informasi Donor Darah UTD-PMI",
-  "main": "api/index.js",
+  "main": "index.js",
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "api-service": "nodemon api/index.js"
+    "api-service": "nodemon index.js"
   },
   "author": "",
   "license": "ISC",
