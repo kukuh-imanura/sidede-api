@@ -29,7 +29,7 @@ export const post = async (req, res) => {
   const value = [foto, username, hashPass, hak_akses];
   const result = await query(sql, value);
 
-  response(200, result, 'Post data hak_akses', res);
+  response(200, result, 'Tambah data berhasil', res);
 };
 
 export const patch = async (req, res) => {
@@ -42,22 +42,11 @@ export const patch = async (req, res) => {
     datas.password = await bcryptjs.hash(datas.password, salt); // Hash password
   }
 
-  // Bangun query secara dinamis
-  // Membangun keys/fields
-  const fields = Object.keys(datas)
-    .map((field) => `${field} = ?`)
-    .join(', ');
+  const sql = `UPDATE hak_akses SET ? WHERE id_akses = ?`;
+  const value = [datas, id];
+  const result = await query(sql, value);
 
-  // Membangun values
-  const values = Object.values(datas);
-
-  // Menambahkan ID
-  values.push(id);
-
-  const sql = `UPDATE hak_akses SET ${fields} WHERE id_akses = ?`;
-  const result = await query(sql, values);
-
-  response(200, result, 'Patch data hak_akses', res);
+  response(200, result, 'Ubah data berhasil', res);
 };
 
 export const del = async (req, res) => {
@@ -66,5 +55,5 @@ export const del = async (req, res) => {
   const sql = 'DELETE FROM hak_akses WHERE id_akses = ?';
   const result = await query(sql, id);
 
-  response(200, result, 'Hapus data hak_akses', res);
+  response(200, result, 'Hapus data berhasil', res);
 };
