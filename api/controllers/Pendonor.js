@@ -1,21 +1,20 @@
 import query from '../connect.js';
 import response from '../response.js';
-import bcryptjs from 'bcryptjs';
 
 export const getAll = async (req, res) => {
-  const sql = 'SELECT * FROM hak_akses';
+  const sql = 'SELECT * FROM pendonor';
   const result = await query(sql);
 
-  response(200, result, 'Get data hak_akses', res);
+  response(200, result, 'Get data pendonor', res);
 };
 
 export const get = async (req, res) => {
-  const { id } = req.params;
+  const { nik } = req.params;
 
-  const sql = 'SELECT * FROM hak_akses WHERE id_akses = ?';
-  const result = await query(sql, id);
+  const sql = 'SELECT * FROM pendonor WHERE nik = ?';
+  const result = await query(sql, nik);
 
-  response(200, result, `Get data hak_akses ${id}`, res);
+  response(200, result, 'Get data hak_akses', res);
 };
 
 export const post = async (req, res) => {
