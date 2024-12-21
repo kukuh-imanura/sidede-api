@@ -21,6 +21,12 @@ export const get = async (req, res) => {
 export const post = async (req, res) => {
   const { foto, username, password, hak_akses } = req.body;
 
+  const userExist = await query(`SELECT * FROM hak_akses WHERE username = ?`, username);
+
+  if (userExist.length > 0) {
+    return response(409, null, 'Username sudah ada', res);
+  }
+
   // HASH PASSWORD
   const salt = await bcryptjs.genSalt(12);
   const hashPass = await bcryptjs.hash(password, salt);
