@@ -12,15 +12,15 @@ const pool = mysql.createPool({
   queueLimit: 0, // Tidak ada batas antrian
 });
 
-const execute = async (query, value) => {
+const query = async (query, value) => {
   try {
     const newValue = value ? (Array.isArray(value) ? value : [value]) : [];
 
-    const [result] = await pool.execute(query, newValue ?? []); // hasil dari query
+    const [result] = await pool.query(query, newValue ?? []); // hasil dari query
     return result;
   } catch (error) {
     console.log(error);
   }
 };
 
-export default execute;
+export default query;

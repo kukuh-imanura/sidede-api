@@ -1,86 +1,109 @@
-import execute from '../connect.js';
+import query from '../connect.js';
 import response from '../response.js';
 import bcryptjs from 'bcryptjs';
 
 export const getAll = async (req, res) => {
-  const sql = 'SELECT * FROM hak_akses';
+  try {
+    const sql = 'SELECT * FROM hak_akses';
+    const result = await query(sql);
 
-  await execute(sql)
-    .then((result) => {
-      if (result.length === 0) throw new Error('Data tidak ditemukan');
-      response(res, 200, 'Berhasil mengambil data', result);
-    })
-    .catch((err) => {
-      console.error(err);
-      throw new Error('Gagal mengambil data');
-    });
+    if (!result.length) return response(res, 204, 'Data kosong');
+
+    return response(res, 200, 'Berhasil mengambil data', result);
+  } catch (err) {
+    console.error('Error saat mengambil data :', err.message);
+    return response(res, 500, 'Gagal mengambil data');
+  }
 };
 
 export const get = async (req, res) => {
-  const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-  const sql = 'SELECT * FROM hak_akses WHERE id_akses = ?';
+    const sql = 'SELECT * FROM hak_akses WHERE id_akses = ?';
+    const result = await query(sql, id);
 
-  await execute(sql, id)
-    .then((result) => {
-      if (result.length === 0) throw new Error('Data tidak ditemukan');
+    if (!result.length) return response(res, 204, 'Data tidak ditemukan');
 
-      response(res, 200, 'Berhasil mengambil data', result);
-    })
-    .catch((err) => {
-      console.error(err);
-      throw new Error('Gagal mengambil data');
-    });
+    return response(res, 200, 'Berhasil mengambil data', result);
+  } catch (err) {
+    console.error('Error saat mengambil data :', err.message);
+    return response(res, 500, 'Gagal mengambil data');
+  }
 };
 
 export const post = async (req, res) => {
-  const { foto, username, password, hak_akses } = req.body;
+  try {
+    const { foto, username, password, hak_akses } = req.body;
+    const checkSql = `SELECT * FROM hak_akses WHERE username = ?`;
+    const checkResult = await query(checkSql, username);
 
-  let sql = `SELECT * FROM hak_akses WHERE username = ?`;
-  await execute(sql, username).then((result) => {
-    if (result.length > 0) throw new Error('Username sudah ada');
-  });
+    if (checkResult.length) return response(res, 409, 'Username sudah ada');
 
-  // HASH PASSWORD
-  const salt = await bcryptjs.genSalt(12);
-  const hashPass = await bcryptjs.hash(password, salt);
+    // HASH PASSWORD
+    const salt = await bcryptjs.genSalt(12);
+    const hashPass = await bcryptjs.hash(password, salt);
 
-  sql = 'INSERT INTO hak_akses (foto, username, password, hak_akses) VALUES (?, ?, ?, ?)';
-  const value = [foto, username, hashPass, hak_akses];
+    const insertSql =
+      'INSERT INTO hak_akses (foto, username, password, hak_akses) VALUES (?, ?, ?, ?)';
+    const insertValue = [foto, username, hashPass, hak_akses];
 
-  await execute(sql, value)
-    .then((result) => {
-      if (result.affectedRows) response(res, 200, 'Berhasil menambah data');
-    })
-    .catch((err) => {
-      console.error(err);
+    const insertResult = await query(insertSql, insertValue);
 
-      throw new Error('Gagal menambah data');
-    });
+    if (insertResult.affectedRows) return response(res, 200, 'Berhasil menambah data');
+  } catch (err) {
+    console.error('Error saat menambah data :', err.message);
+    return response(res, 500, 'Gagal menambah data');
+  }
 };
 
 export const patch = async (req, res) => {
-  const id = req.params.id;
-  const datas = { ...req.body };
+  try {
+    const id = req.params.id;
 
-  // Jika terdapat password di request body, hash terlebih dahulu
-  if (datas.password) {
-    const salt = await bcryptjs.genSalt(12); // Generate salt
-    datas.password = await bcryptjs.hash(datas.password, salt); // Hash password
+    const datas = Object.fromEntries(
+      Object.entries(req.body).filter(
+        ([_, value]) => value !== undefined && value !== null && value !== ''
+      )
+    );
+
+    if (Object.keys(datas).length === 0) {
+      return response(res, 400, 'Tidak ada data untuk diubah');
+    }
+
+    if (datas.username) {
+      const checkSql = 'SELECT * FROM hak_akses WHERE username = ?';
+      const checkResult = await query(checkSql, datas.username);
+      if (checkResult.length) return response(res, 409, 'Username sudah ada');
+    }
+
+    // Jika terdapat password di request body, hash terlebih dahulu
+    if (datas.password) {
+      const salt = await bcryptjs.genSalt(12); // Generate salt
+      datas.password = await bcryptjs.hash(datas.password, salt); // Hash password
+    }
+
+    const updateSql = 'UPDATE hak_akses SET ? WHERE id_akses = ?';
+    const updateValue = [datas, id];
+    const updateResult = await query(updateSql, updateValue);
+
+    if (updateResult.affectedRows) return response(res, 200, 'Ubah data berhasil');
+  } catch (err) {
+    console.error('Error saat mengubah data :', err.message);
+    return response(res, 500, 'Gagal mengubah data');
   }
-
-  const sql = `UPDATE hak_akses SET ? WHERE id_akses = ?`;
-  const value = [datas, id];
-  const result = await execute(sql, value);
-
-  response(200, result, 'Ubah data berhasil', res);
 };
 
 export const del = async (req, res) => {
-  const id = req.params.id;
+  try {
+    const id = req.params.id;
 
-  const sql = 'DELETE FROM hak_akses WHERE id_akses = ?';
-  const result = await execute(sql, id);
+    const sql = 'DELETE FROM hak_akses WHERE id_akses = ?';
+    const result = await query(sql, id);
 
-  response(200, result, 'Hapus data berhasil', res);
+    if (result.affectedRows) return response(res, 200, 'Hapus data berhasil');
+  } catch (err) {
+    console.error('Error saat menghapus data :', err.message);
+    return response(res, 500, 'Gagal menghapus data');
+  }
 };
