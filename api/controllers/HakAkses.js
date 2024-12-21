@@ -7,13 +7,12 @@ export const getAll = async (req, res) => {
 
   await execute(sql)
     .then((result) => {
-      if (result.length === 0) return response(res, 404, 'Data tidak ditemukan');
-
+      if (result.length === 0) throw new Error('Data tidak ditemukan');
       response(res, 200, 'Berhasil mengambil data', result);
     })
     .catch((err) => {
       console.error(err);
-      response(res, 500, 'Gagal mengambil data');
+      throw new Error('Gagal mengambil data');
     });
 };
 
@@ -24,13 +23,13 @@ export const get = async (req, res) => {
 
   await execute(sql, id)
     .then((result) => {
-      if (result.length === 0) return response(res, 404, 'Data tidak ditemukan');
+      if (result.length === 0) throw new Error('Data tidak ditemukan');
 
       response(res, 200, 'Berhasil mengambil data', result);
     })
     .catch((err) => {
       console.error(err);
-      response(res, 500, 'Gagal mengambil data');
+      throw new Error('Gagal mengambil data');
     });
 };
 
@@ -51,12 +50,12 @@ export const post = async (req, res) => {
 
   await execute(sql, value)
     .then((result) => {
-      if (result.affectedRows) response(res, 200, 'Berhasil menambah data', result);
+      if (result.affectedRows) response(res, 200, 'Berhasil menambah data');
     })
     .catch((err) => {
       console.error(err);
 
-      response(res, 500, 'Gagal menambah data');
+      throw new Error('Gagal menambah data');
     });
 };
 
