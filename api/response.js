@@ -1,7 +1,12 @@
-const response = (res, statusCode, message, data = null) => {
+const response = (res, statusCode, message, data, prev, next, max) => {
   res.status(statusCode).json({
-    message: message,
+    message,
     result: data,
+    pagination: {
+      prev,
+      next,
+      max,
+    },
   });
 };
 

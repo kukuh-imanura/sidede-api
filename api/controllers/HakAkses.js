@@ -4,12 +4,25 @@ import bcryptjs from 'bcryptjs';
 
 export const getAll = async (req, res) => {
   try {
-    const sql = 'SELECT * FROM hak_akses';
-    const result = await query(sql);
+    const limit = parseInt(req.query.limit) || 5;
+    const page = parseInt(req.query.page) || 1;
+    const offset = (page - 1) * limit;
 
-    if (!result.length) return response(res, 204, 'Data kosong');
+    const countSql = 'SELECT COUNT(*) AS total FROM hak_akses';
+    const totalResult = await query(countSql);
+    const total = totalResult[0].total;
 
-    return response(res, 200, 'Berhasil mengambil data', result);
+    const totalPages = Math.ceil(total / limit);
+    const prev = Math.max(page - 1, 1);
+    const next = Math.min(page + 1, totalPages);
+
+    const dataSql = 'SELECT * FROM hak_akses ORDER BY username ASC LIMIT ? OFFSET ?';
+    const dataValue = [limit, offset];
+    const dataResult = await query(dataSql, dataValue);
+
+    if (!dataResult.length) return response(res, 204, 'Data kosong');
+
+    return response(res, 200, 'Berhasil mengambil data', dataResult, prev, next, totalPages);
   } catch (err) {
     console.error('Error saat mengambil data :', err.message);
     return response(res, 500, 'Gagal mengambil data');
