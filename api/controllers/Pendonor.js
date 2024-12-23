@@ -52,18 +52,18 @@ export const post = async (req, res) => {
       username,
       password,
       nik,
-      nkd,
+      no_kartu,
       nama,
-      jk,
-      tempatLhr,
-      tglLhr,
+      jenis_kelamin,
+      tempat_lahir,
+      tgl_lahir,
       pekerjaan,
       kecamatan,
       kelurahan,
       kota,
       alamat,
-      telpRmh,
-      almKantor,
+      telp_rumah,
+      alamat_kantor,
       email,
     } = req.body;
 
@@ -72,7 +72,7 @@ export const post = async (req, res) => {
     if (checkResult.length) return response(res, 409, 'Username sudah ada');
 
     const checkPendonorSql = `SELECT * FROM pendonor WHERE nik = ? OR no_kartu = ?`;
-    const checkPendonorValue = [nik, nkd];
+    const checkPendonorValue = [nik, no_kartu];
     const checkPendonorResult = await query(checkPendonorSql, checkPendonorValue);
     if (checkPendonorResult.length)
       return response(res, 409, 'NIK / No Kartu Donor sudah terdaftar');
@@ -92,18 +92,18 @@ export const post = async (req, res) => {
     const pendonorValue = [
       nik,
       id_akses,
-      nkd,
+      no_kartu,
       nama,
-      jk,
-      tempatLhr,
-      tglLhr,
+      jenis_kelamin,
+      tempat_lahir,
+      tgl_lahir,
       pekerjaan,
       kecamatan,
       kelurahan,
       kota,
       alamat,
-      telpRmh,
-      almKantor,
+      telp_rumah,
+      alamat_kantor,
       email,
     ];
     const pendonorResult = await query(pendonorSql, pendonorValue);
@@ -185,10 +185,18 @@ export const del = async (req, res) => {
   try {
     const nik = req.params.nik;
 
-    const sql = 'DELETE FROM pendonor WHERE nik = ?';
-    const result = await query(sql, nik);
+    const idSql = 'SELECT id_akses FROM pendonor WHERE nik = ?';
+    const idRes = await query(idSql, nik);
+    const id_akses = idRes[0]?.id_akses;
 
-    if (result.affectedRows) return response(res, 200, 'Hapus data berhasil');
+    const aksesSql = 'DELETE FROM hak_akses WHERE id_akses = ?';
+    const aksesRes = await query(aksesSql, id_akses);
+    if (aksesRes.affectedRows) console.log(`Berhasil hapus data akses dengan id ${id_akses}`);
+
+    const pendonorSql = 'DELETE FROM pendonor WHERE nik = ?';
+    const pendonorResult = await query(pendonorSql, nik);
+
+    if (pendonorResult.affectedRows) return response(res, 200, 'Hapus data berhasil');
   } catch (err) {
     console.error('Error saat menghapus data :', err.message);
     return response(res, 500, 'Gagal menghapus data');
