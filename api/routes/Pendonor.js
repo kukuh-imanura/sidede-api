@@ -6,7 +6,7 @@ const router = express.Router();
 router.get('/', getAll);
 router.get('/:nik', get);
 router.post('/', post);
-router.patch('/:id', patch);
-router.delete('/:id', del);
+router.patch('/:nik', patch);
+router.delete('/:nik', del);
 
 export default router;
