@@ -150,12 +150,14 @@ export const patch = async (req, res) => {
     }
 
     // PISAHKAN DATA
-    const { foto, username, password, ...pendonor } = datas;
+    const { foto, username, password, konfPass, ...pendonor } = datas;
     const akses = Object.fromEntries(
       Object.entries({ foto, username, password }).filter(
         ([_, value]) => value !== undefined && value !== null && value !== ''
       )
     );
+
+    let isUpdated = false;
 
     if (Object.keys(akses).length > 0) {
       const idSql = 'SELECT id_akses FROM pendonor WHERE nik = ?';
@@ -165,16 +167,17 @@ export const patch = async (req, res) => {
       const aksesSql = 'UPDATE hak_akses SET ? WHERE id_akses = ?';
       const aksesValue = [akses, id_akses];
       const aksesResult = await query(aksesSql, aksesValue);
-      if (aksesResult.affectedRows)
-        response(res, 200, `Berhasil ubah data hak_akses dengan id ${id_akses}`);
+      if (aksesResult.affectedRows) isUpdated = true;
     }
 
     if (Object.keys(pendonor).length > 0) {
       const pendonorSql = 'UPDATE pendonor SET ? WHERE nik = ?';
       const pendonorValue = [pendonor, nik];
       const pendonorResult = await query(pendonorSql, pendonorValue);
-      if (pendonorResult.affectedRows) return response(res, 200, `Ubah data berhasil`);
+      if (pendonorResult.affectedRows) isUpdated = true;
     }
+
+    if (isUpdated) return response(res, 200, 'Update data berhasil');
   } catch (err) {
     console.error('Error saat mengubah data :', err.message);
     return response(res, 500, 'Gagal mengubah data');
