@@ -7,7 +7,7 @@ export const getAll = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const offset = (page - 1) * limit;
 
-    const countSql = 'SELECT COUNT(*) AS total FROM pendaftaran';
+    const countSql = 'SELECT COUNT(*) AS total FROM mobile_unit';
     const totalResult = await query(countSql);
     const total = totalResult[0].total;
 
@@ -15,7 +15,7 @@ export const getAll = async (req, res) => {
     const prev = Math.max(page - 1, 1);
     const next = Math.min(page + 1, totalPages);
 
-    const dataSql = 'SELECT * FROM pendaftaran ORDER BY nik ASC LIMIT ? OFFSET ?';
+    const dataSql = 'SELECT * FROM mobile_unit ORDER BY jadwal ASC LIMIT ? OFFSET ?';
     const dataValue = [limit, offset];
     const dataResult = await query(dataSql, dataValue);
 
@@ -32,9 +32,7 @@ export const get = async (req, res) => {
   try {
     const { id } = req.params;
 
-    console.log({ id });
-
-    const sql = 'SELECT * FROM pendaftaran WHERE id_pendaftaran = ?';
+    const sql = 'SELECT * FROM mobile_unit WHERE id_mu = ?';
     const result = await query(sql, id);
 
     if (!result.length) return response(res, 204, 'Data tidak ditemukan');
@@ -48,37 +46,14 @@ export const get = async (req, res) => {
 
 export const post = async (req, res) => {
   try {
-    const { nik, lokasi, tipe, penghargaan, donor_puasa, donor_sukarela } = req.body;
+    const { jadwal, lokasi } = req.body;
 
-    const checkSql = 'SELECT COUNT(*) AS total FROM pendonor WHERE nik = ?';
-    const checkRes = await query(checkSql, nik);
-    if (checkRes[0].total === 0) return response(res, 404, 'NIK tidak terdaftar');
+    const checkSql = `SELECT * FROM mobile_unit WHERE jadwal = ?`;
+    const checkResult = await query(checkSql, jadwal);
+    if (checkResult.length) return response(res, 409, 'Jadwal di tanggal tersebut sudah ada');
 
-    const now = new Date();
-
-    const getSql =
-      'SELECT donor_ke, tgl_donor, status FROM pendaftaran WHERE nik = ? ORDER BY donor_ke DESC LIMIT 1';
-    const getRes = await query(getSql, nik);
-    const { donor_ke, tgl_donor, status } = getRes[0] || { donor_ke: 0, tgl_donor: null };
-
-    if (status === 'P')
-      return response(res, 409, 'Tidak bisa mendaftar, pendaftaran sebelumnya belum di proses');
-
-    const insertSql =
-      'INSERT INTO pendaftaran (nik, tgl_donor,	lokasi,	tipe,	donor_ke,	tgl_akhir_donor,	donor_puasa,	donor_sukarela,	penghargaan,	status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
-    const insertValue = [
-      nik,
-      now,
-      lokasi,
-      tipe,
-      donor_ke + 1,
-      tgl_donor,
-      donor_puasa,
-      donor_sukarela,
-      penghargaan,
-      'P',
-    ];
-
+    const insertSql = 'INSERT INTO mobile_unit (jadwal, lokasi) VALUES (?, ?)';
+    const insertValue = [jadwal, lokasi];
     const insertResult = await query(insertSql, insertValue);
 
     if (insertResult.affectedRows) return response(res, 200, 'Berhasil menambah data');
@@ -102,7 +77,13 @@ export const patch = async (req, res) => {
       return response(res, 400, 'Tidak ada data untuk diubah');
     }
 
-    const updateSql = 'UPDATE pendaftaran SET ? WHERE id_pendaftaran = ?';
+    if (datas.jadwal) {
+      const checkSql = 'SELECT * FROM mobile_unit WHERE jadwal = ?';
+      const checkResult = await query(checkSql, datas.jadwal);
+      if (checkResult.length) return response(res, 409, 'Jadwal sudah ada');
+    }
+
+    const updateSql = 'UPDATE mobile_unit SET ? WHERE id_mu = ?';
     const updateValue = [datas, id];
     const updateResult = await query(updateSql, updateValue);
 
@@ -117,7 +98,7 @@ export const del = async (req, res) => {
   try {
     const id = req.params.id;
 
-    const sql = 'DELETE FROM pendaftaran WHERE id_pendaftaran = ?';
+    const sql = 'DELETE FROM mobile_unit WHERE id_mu = ?';
     const result = await query(sql, id);
 
     if (result.affectedRows) return response(res, 200, 'Hapus data berhasil');
