@@ -7,7 +7,6 @@ import pemeriksaan from './Pemeriksaan.js';
 import mobileunit from './MobileUnit.js';
 import pertanyaan from './Pertanyaan.js';
 import screening from './Screening.js';
-import auth from './Auth.js';
 
 const app = express();
 
@@ -18,6 +17,5 @@ app.use('/pemeriksaan', pemeriksaan);
 app.use('/mobileunit', mobileunit);
 app.use('/pertanyaan', pertanyaan);
 app.use('/screening', screening);
-app.use('/auth', auth);
 
 export default app;
