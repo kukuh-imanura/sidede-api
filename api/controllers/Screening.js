@@ -106,29 +106,10 @@ export const patch = async (req, res) => {
     const { id_pendaftaran, ...questions } = req.body;
 
     const updateSql =
-      'UPDATE jawaban_screening SET verifikasi = ?, status = ? WHERE id_pendaftaran = ? AND id_pertanyaan = ?';
+      'UPDATE jawaban_screening SET verifikasi = ? WHERE id_pendaftaran = ? AND id_pertanyaan = ?';
 
     for (const [id_pertanyaan, verifikasi] of Object.entries(questions)) {
-      // Ambil jawaban yang ada saat ini untuk id_pertanyaan dan id_pendaftaran
-      const getJawabanSql =
-        'SELECT jawaban FROM jawaban_screening WHERE id_pendaftaran = ? AND id_pertanyaan = ?';
-      const [result] = await query(getJawabanSql, [id_pendaftaran, id_pertanyaan]);
-
-      if (!result) {
-        return response(res, 404, `Jawaban tidak ditemukan untuk id_pertanyaan: ${id_pertanyaan}`);
-      }
-
-      // Tentukan status berdasarkan perbandingan jawaban dan verifikasi
-      const jawaban = result.jawaban;
-      const status = jawaban === verifikasi ? 1 : 0;
-
-      // Update verifikasi dan status
-      const updateResult = await query(updateSql, [
-        verifikasi,
-        status,
-        id_pendaftaran,
-        id_pertanyaan,
-      ]);
+      const updateResult = await query(updateSql, [verifikasi, id_pendaftaran, id_pertanyaan]);
 
       if (!updateResult.affectedRows) {
         return response(res, 400, `Gagal mengupdate id_pertanyaan: ${id_pertanyaan}`);
