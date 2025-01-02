@@ -3,27 +3,43 @@ import response from '../response.js';
 
 export const getAll = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 5;
-    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5; // Default 5 per halaman
+    const page = parseInt(req.query.page) || 1; // Default halaman 1
+    const status = req.query.status || '';
     const offset = (page - 1) * limit;
 
-    const countSql = 'SELECT COUNT(*) AS total FROM pendaftaran';
-    const totalResult = await query(countSql);
-    const total = totalResult[0].total;
+    // Query Kondisi Dinamis
+    const whereClauses = [];
+    const queryParams = [];
 
+    if (status) {
+      whereClauses.push('status = ?');
+      queryParams.push(status);
+    }
+
+    const whereSql = whereClauses.length ? `WHERE ${whereClauses.join(' AND ')}` : '';
+
+    // Hitung Total Data
+    const countSql = `SELECT COUNT(*) AS total FROM pendaftaran ${whereSql}`;
+    const totalResult = await query(countSql, queryParams);
+    const total = totalResult[0]?.total || 0;
+
+    if (total === 0) return response(res, 204, 'Data kosong');
+
+    // Hitung Pagination
     const totalPages = Math.ceil(total / limit);
     const prev = Math.max(page - 1, 1);
     const next = Math.min(page + 1, totalPages);
 
-    const dataSql = 'SELECT * FROM pendaftaran ORDER BY nik ASC LIMIT ? OFFSET ?';
-    const dataValue = [limit, offset];
-    const dataResult = await query(dataSql, dataValue);
+    // Ambil Data dengan Limit dan Offset
+    const dataSql = `SELECT * FROM pendaftaran ${whereSql} ORDER BY nik ASC LIMIT ? OFFSET ?`;
+    queryParams.push(limit, offset);
 
-    if (!dataResult.length) return response(res, 204, 'Data kosong');
+    const dataResult = await query(dataSql, queryParams);
 
     return response(res, 200, 'Berhasil mengambil data', dataResult, prev, next, totalPages);
   } catch (err) {
-    console.error('Error saat mengambil data :', err.message);
+    console.error('Error saat mengambil data:', err.message);
     return response(res, 500, 'Gagal mengambil data');
   }
 };
