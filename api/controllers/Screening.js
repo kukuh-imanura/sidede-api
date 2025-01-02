@@ -103,37 +103,41 @@ export const post = async (req, res) => {
 
 export const patch = async (req, res) => {
   try {
-    const id = req.params.id;
+    const { id_pendaftaran, ...questions } = req.body;
 
-    const datas = Object.fromEntries(
-      Object.entries(req.body).filter(
-        ([_, value]) => value !== undefined && value !== null && value !== ''
-      )
-    );
+    const updateSql =
+      'UPDATE jawaban_screening SET verifikasi = ?, status = ? WHERE id_pendaftaran = ? AND id_pertanyaan = ?';
 
-    if (Object.keys(datas).length === 0) {
-      return response(res, 400, 'Tidak ada data untuk diubah');
+    for (const [id_pertanyaan, verifikasi] of Object.entries(questions)) {
+      // Ambil jawaban yang ada saat ini untuk id_pertanyaan dan id_pendaftaran
+      const getJawabanSql =
+        'SELECT jawaban FROM jawaban_screening WHERE id_pendaftaran = ? AND id_pertanyaan = ?';
+      const [result] = await query(getJawabanSql, [id_pendaftaran, id_pertanyaan]);
+
+      if (!result) {
+        return response(res, 404, `Jawaban tidak ditemukan untuk id_pertanyaan: ${id_pertanyaan}`);
+      }
+
+      // Tentukan status berdasarkan perbandingan jawaban dan verifikasi
+      const jawaban = result.jawaban;
+      const status = jawaban === verifikasi ? 1 : 0;
+
+      // Update verifikasi dan status
+      const updateResult = await query(updateSql, [
+        verifikasi,
+        status,
+        id_pendaftaran,
+        id_pertanyaan,
+      ]);
+
+      if (!updateResult.affectedRows) {
+        return response(res, 400, `Gagal mengupdate id_pertanyaan: ${id_pertanyaan}`);
+      }
     }
 
-    if (datas.username) {
-      const checkSql = 'SELECT * FROM hak_akses WHERE username = ?';
-      const checkResult = await query(checkSql, datas.username);
-      if (checkResult.length) return response(res, 409, 'Username sudah ada');
-    }
-
-    // Jika terdapat password di request body, hash terlebih dahulu
-    if (datas.password) {
-      const salt = await bcryptjs.genSalt(12); // Generate salt
-      datas.password = await bcryptjs.hash(datas.password, salt); // Hash password
-    }
-
-    const updateSql = 'UPDATE hak_akses SET ? WHERE id_akses = ?';
-    const updateValue = [datas, id];
-    const updateResult = await query(updateSql, updateValue);
-
-    if (updateResult.affectedRows) return response(res, 200, 'Ubah data berhasil');
+    return response(res, 200, 'Ubah data berhasil');
   } catch (err) {
-    console.error('Error saat mengubah data :', err.message);
+    console.error('Error saat mengubah data:', err.message);
     return response(res, 500, 'Gagal mengubah data');
   }
 };
