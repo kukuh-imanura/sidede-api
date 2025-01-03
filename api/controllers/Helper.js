@@ -36,3 +36,33 @@ export const count = async (req, res) => {
     return response(res, 500, 'Gagal menghitung data');
   }
 };
+
+export const status = async (req, res) => {
+  try {
+    const id_pendaftaran = req.query.id_pendaftaran;
+
+    // Ambil data screening
+    const screeningSql = 'SELECT * FROM jawaban_screening WHERE id_pendaftaran = ?';
+    const screeningResult = await query(screeningSql, id_pendaftaran);
+
+    // Cek apakah semua data di field 'verifikasi' sudah terisi
+    const verifiedScreening = screeningResult.every(
+      (item) => item.verifikasi !== null && item.verifikasi !== undefined
+    );
+
+    // Ambil data pemeriksaan kesehatan
+    const pemeriksaanSql = 'SELECT * FROM pemeriksaan_kesehatan WHERE id_pendaftaran = ?';
+    const pemeriksaanResult = await query(pemeriksaanSql, id_pendaftaran);
+
+    // Susun hasil
+    const result = {
+      screening: verifiedScreening, // True jika semua data verifikasi terisi
+      pemeriksaan: pemeriksaanResult.length > 0, // True jika ada data pemeriksaan
+    };
+
+    return response(res, 200, 'Berhasil mengambil data', result);
+  } catch (err) {
+    console.error(err.message);
+    return response(res, 500, 'Gagal mengambil status');
+  }
+};
