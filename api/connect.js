@@ -9,7 +9,7 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME,
   timezone: '+08:00',
   waitForConnections: true, // Tunggu hingga ada koneksi yang tersedia
-  connectionLimit: 10, // Batas maksimal koneksi yang dibuat dalam pool
+  connectionLimit: 5, // Batas maksimal koneksi yang dibuat dalam pool
   queueLimit: 0, // Tidak ada batas antrian
 });
 
