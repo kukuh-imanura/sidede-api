@@ -16,7 +16,6 @@ const pool = mysql.createPool({
 const query = async (query, value) => {
   try {
     const newValue = value ? (Array.isArray(value) ? value : [value]) : [];
-
     const [result] = await pool.query(query, newValue ?? []); // hasil dari query
     return result;
   } catch (error) {

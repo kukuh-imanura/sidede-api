@@ -5,6 +5,7 @@ export const getAll = async (req, res) => {
   try {
     const limit = parseInt(req.query.limit) || 5;
     const page = parseInt(req.query.page) || 1;
+    const filter = req.query.filter || 'all';
     const offset = (page - 1) * limit;
 
     const countSql = 'SELECT COUNT(*) AS total FROM mobile_unit';
@@ -15,7 +16,10 @@ export const getAll = async (req, res) => {
     const prev = Math.max(page - 1, 1);
     const next = Math.min(page + 1, totalPages);
 
-    const dataSql = 'SELECT * FROM mobile_unit ORDER BY jadwal ASC LIMIT ? OFFSET ?';
+    let whereClause = '';
+    if (filter === 'new') whereClause = 'WHERE jadwal >= CURRENT_DATE';
+
+    const dataSql = `SELECT * FROM mobile_unit ${whereClause} ORDER BY jadwal ASC LIMIT ? OFFSET ?`;
     const dataValue = [limit, offset];
     const dataResult = await query(dataSql, dataValue);
 
